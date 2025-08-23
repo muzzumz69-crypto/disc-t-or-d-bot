@@ -1,0 +1,43 @@
+{
+  "truth": {
+    "sfw": [
+      "What's your biggest fear?",
+      "What was your most embarrassing moment in school?",
+      "If you could learn one skill instantly, what would it be?"
+    ],
+    "nsfw": [
+      "What's your wildest consensual fantasy?",
+      "Have you ever sent a spicy text to the wrong person?"
+    ]
+  },
+  "dare": {
+    "sfw": [
+      "Do 10 push-ups right now and report back!",
+      "Talk in a movie-trailer voice for the next 2 minutes."
+    ],
+    "nsfw": [
+      "Type only in pickup lines for the next 5 minutes.",
+      "Send a (non-graphic) cringey poem to your last DM contact."
+    ]
+  },
+  "wyr": {
+    "sfw": [
+      "Would you rather be able to fly or be invisible?",
+      "Would you rather never need sleep or never need food?"
+    ],
+    "nsfw": [
+      "Would you rather go on a spontaneous date with a celeb or your crush?",
+      "Would you rather have your texts leaked or your search history leaked?"
+    ]
+  },
+  "ama": {
+    "sfw": [
+      "What's the best decision you've made in the last year?",
+      "What's a tiny habit that changed your life?"
+    ],
+    "nsfw": [
+      "What's the cheekiest thing you've done and still giggle about?",
+      "What instantly gets you in a flirty mood?"
+    ]
+  }
+}
