@@ -2,11 +2,14 @@ import os
 import json
 import random
 from pathlib import Path
+import threading
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
+
+from flask import Flask
 
 # ---------- Setup ----------
 load_dotenv()
@@ -136,12 +139,12 @@ class ModeSelect(discord.ui.View):
 # ---------- Events ----------
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user} (id: {bot.user.id})")
+    print(f"✅ Logged in as {bot.user} (id: {bot.user.id})")
     try:
         await tree.sync()
-        print("Slash commands synced globally.")
+        print("✅ Slash commands synced globally.")
     except Exception as e:
-        print("Failed to sync global commands:", e)
+        print("❌ Failed to sync global commands:", e)
 
 
 # ---------- Slash Commands ----------
@@ -198,8 +201,25 @@ async def help_command(interaction: discord.Interaction):
     await respond(interaction, embed=e, ephemeral=(interaction.guild is not None))
 
 
+# ---------- Webserver (for Render free plan) ----------
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "✅ Bot is running on Render!"
+
+def run_web():
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
+
 # ---------- Entrypoint ----------
 if __name__ == "__main__":
     if not TOKEN:
         raise SystemExit("DISCORD_TOKEN not set. Put it in .env or environment variables.")
+
+    # Run Flask in a background thread
+    threading.Thread(target=run_web).start()
+
+    # Run the bot
     bot.run(TOKEN)
