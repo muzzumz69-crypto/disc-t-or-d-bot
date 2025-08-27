@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: Truth or Dare | WYR | AMA Bot
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python bot_web.py"
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_PERMISSIONS
+        value: "2147485696"
+      - key: DISCORD_PUBLIC
+        value: "true"
