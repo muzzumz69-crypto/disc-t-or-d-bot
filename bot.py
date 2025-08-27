@@ -155,6 +155,7 @@ async def on_ready():
 
 # ---------- Slash Commands ----------
 @tree.command(name="truth", description="Get a Truth question with buttons.")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def truth(interaction: discord.Interaction):
     q = get_question("truth", interaction.user.id)
     await respond(interaction, embed=make_embed("Truth", q, get_user_mode(interaction.user.id), interaction),
@@ -162,6 +163,7 @@ async def truth(interaction: discord.Interaction):
 
 
 @tree.command(name="dare", description="Get a Dare question with buttons.")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def dare(interaction: discord.Interaction):
     q = get_question("dare", interaction.user.id)
     await respond(interaction, embed=make_embed("Dare", q, get_user_mode(interaction.user.id), interaction),
@@ -169,6 +171,7 @@ async def dare(interaction: discord.Interaction):
 
 
 @tree.command(name="wyr", description="Get a Would You Rather question with buttons.")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def wyr(interaction: discord.Interaction):
     q = get_question("wyr", interaction.user.id)
     await respond(interaction, embed=make_embed("Would You Rather", q, get_user_mode(interaction.user.id), interaction),
@@ -176,6 +179,7 @@ async def wyr(interaction: discord.Interaction):
 
 
 @tree.command(name="ama", description="Get an AMA prompt with buttons.")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def ama(interaction: discord.Interaction):
     q = get_question("ama", interaction.user.id)
     await respond(interaction, embed=make_embed("Ask Me Anything", q, get_user_mode(interaction.user.id), interaction),
@@ -183,12 +187,14 @@ async def ama(interaction: discord.Interaction):
 
 
 @tree.command(name="mode", description="Choose SFW or NSFW mode (per user).")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def mode(interaction: discord.Interaction):
     await respond(interaction, content="⚙️ Choose your mode:", view=ModeSelect(),
                   ephemeral=(interaction.guild is not None))
 
 
 @tree.command(name="help", description="Show available commands and usage.")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def help_command(interaction: discord.Interaction):
     e = discord.Embed(title="📖 Truth or Dare Bot Help", color=discord.Color.magenta())
     e.add_field(
@@ -211,6 +217,7 @@ async def help_command(interaction: discord.Interaction):
 
 # ---------- Admin Commands ----------
 @tree.command(name="add", description="Add a new question (Admin only).")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def add_question(interaction: discord.Interaction, category: str, mode: str, *, question: str):
     if interaction.user.id != OWNER_ID:
         return await respond(interaction, content="❌ Only the bot owner can add questions.", ephemeral=True)
@@ -224,6 +231,7 @@ async def add_question(interaction: discord.Interaction, category: str, mode: st
 
 
 @tree.command(name="remove", description="Remove a question (Admin only).")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def remove_question(interaction: discord.Interaction, category: str, mode: str, *, question: str):
     if interaction.user.id != OWNER_ID:
         return await respond(interaction, content="❌ Only the bot owner can remove questions.", ephemeral=True)
