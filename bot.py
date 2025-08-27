@@ -279,7 +279,7 @@ HTML_PAGE = """
     
     <div class="card">
         <h2>✨ Invite the Bot</h2>
-        <p><a class="button" href="https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=2147485696&scope=bot%20applications.commands" target="_blank">Invite Now</a></p>
+        <p><a class="button" href="https://discord.com/oauth2/authorize?client_id=1407985841963274334&permissions=2147485696&scope=bot%20applications.commands" target="_blank">Invite Now</a></p>
     </div>
 </body>
 </html>
