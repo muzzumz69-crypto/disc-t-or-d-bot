@@ -3,7 +3,6 @@ import json
 import random
 from pathlib import Path
 import threading
-from datetime import datetime, timedelta
 
 import discord
 from discord import app_commands
@@ -91,18 +90,6 @@ async def respond(interaction: discord.Interaction, *, content: str | None = Non
         await interaction.response.send_message(content=content, embed=embed, view=view, ephemeral=ephemeral)
 
 
-# ---------- Cooldowns ----------
-cooldowns = {}
-
-def check_cooldown(user_id: int, seconds: int = 3) -> bool:
-    now = datetime.utcnow()
-    last = cooldowns.get(user_id, datetime.min)
-    if (now - last) < timedelta(seconds=seconds):
-        return False  # still cooling down
-    cooldowns[user_id] = now
-    return True
-
-
 # ---------- UI ----------
 class QuestionView(discord.ui.View):
     def __init__(self, user_id: int):
@@ -111,39 +98,31 @@ class QuestionView(discord.ui.View):
 
     @discord.ui.button(label="Truth", style=discord.ButtonStyle.success)
     async def truth_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not check_cooldown(interaction.user.id, 3):
-            return await respond(interaction, content="⏳ Please wait a few seconds before clicking again!", ephemeral=True)
-
         q = get_question("truth", self.user_id)
-        embed = make_embed("Truth", q, get_user_mode(self.user_id), interaction)
-        await respond(interaction, embed=embed, view=QuestionView(self.user_id))
+        await interaction.response.defer()
+        await interaction.channel.send(embed=make_embed("Truth", q, get_user_mode(self.user_id), interaction),
+                                       view=QuestionView(self.user_id))
 
     @discord.ui.button(label="Dare", style=discord.ButtonStyle.danger)
     async def dare_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not check_cooldown(interaction.user.id, 3):
-            return await respond(interaction, content="⏳ Please wait a few seconds before clicking again!", ephemeral=True)
-
         q = get_question("dare", self.user_id)
-        embed = make_embed("Dare", q, get_user_mode(self.user_id), interaction)
-        await respond(interaction, embed=embed, view=QuestionView(self.user_id))
+        await interaction.response.defer()
+        await interaction.channel.send(embed=make_embed("Dare", q, get_user_mode(self.user_id), interaction),
+                                       view=QuestionView(self.user_id))
 
     @discord.ui.button(label="Would You Rather", style=discord.ButtonStyle.primary)
     async def wyr_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not check_cooldown(interaction.user.id, 3):
-            return await respond(interaction, content="⏳ Please wait a few seconds before clicking again!", ephemeral=True)
-
         q = get_question("wyr", self.user_id)
-        embed = make_embed("Would You Rather", q, get_user_mode(self.user_id), interaction)
-        await respond(interaction, embed=embed, view=QuestionView(self.user_id))
+        await interaction.response.defer()
+        await interaction.channel.send(embed=make_embed("Would You Rather", q, get_user_mode(self.user_id), interaction),
+                                       view=QuestionView(self.user_id))
 
     @discord.ui.button(label="Ask Me Anything", style=discord.ButtonStyle.secondary)
     async def ama_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not check_cooldown(interaction.user.id, 3):
-            return await respond(interaction, content="⏳ Please wait a few seconds before clicking again!", ephemeral=True)
-
         q = get_question("ama", self.user_id)
-        embed = make_embed("Ask Me Anything", q, get_user_mode(self.user_id), interaction)
-        await respond(interaction, embed=embed, view=QuestionView(self.user_id))
+        await interaction.response.defer()
+        await interaction.channel.send(embed=make_embed("Ask Me Anything", q, get_user_mode(self.user_id), interaction),
+                                       view=QuestionView(self.user_id))
 
 
 class ModeSelect(discord.ui.View):
