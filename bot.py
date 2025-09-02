@@ -92,37 +92,40 @@ async def respond(interaction: discord.Interaction, *, content: str | None = Non
 
 # ---------- UI ----------
 class QuestionView(discord.ui.View):
-    def __init__(self, user_id: int):
+    def __init__(self):
         super().__init__(timeout=None)
-        self.user_id = user_id
 
     @discord.ui.button(label="Truth", style=discord.ButtonStyle.success)
     async def truth_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        q = get_question("truth", self.user_id)
-        await interaction.response.defer()
-        await interaction.channel.send(embed=make_embed("Truth", q, get_user_mode(self.user_id), interaction),
-                                       view=QuestionView(self.user_id))
+        q = get_question("truth", interaction.user.id)
+        await interaction.response.send_message(
+            embed=make_embed("Truth", q, get_user_mode(interaction.user.id), interaction),
+            view=QuestionView()
+        )
 
     @discord.ui.button(label="Dare", style=discord.ButtonStyle.danger)
     async def dare_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        q = get_question("dare", self.user_id)
-        await interaction.response.defer()
-        await interaction.channel.send(embed=make_embed("Dare", q, get_user_mode(self.user_id), interaction),
-                                       view=QuestionView(self.user_id))
+        q = get_question("dare", interaction.user.id)
+        await interaction.response.send_message(
+            embed=make_embed("Dare", q, get_user_mode(interaction.user.id), interaction),
+            view=QuestionView()
+        )
 
     @discord.ui.button(label="Would You Rather", style=discord.ButtonStyle.primary)
     async def wyr_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        q = get_question("wyr", self.user_id)
-        await interaction.response.defer()
-        await interaction.channel.send(embed=make_embed("Would You Rather", q, get_user_mode(self.user_id), interaction),
-                                       view=QuestionView(self.user_id))
+        q = get_question("wyr", interaction.user.id)
+        await interaction.response.send_message(
+            embed=make_embed("Would You Rather", q, get_user_mode(interaction.user.id), interaction),
+            view=QuestionView()
+        )
 
     @discord.ui.button(label="Ask Me Anything", style=discord.ButtonStyle.secondary)
     async def ama_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        q = get_question("ama", self.user_id)
-        await interaction.response.defer()
-        await interaction.channel.send(embed=make_embed("Ask Me Anything", q, get_user_mode(self.user_id), interaction),
-                                       view=QuestionView(self.user_id))
+        q = get_question("ama", interaction.user.id)
+        await interaction.response.send_message(
+            embed=make_embed("Ask Me Anything", q, get_user_mode(interaction.user.id), interaction),
+            view=QuestionView()
+        )
 
 
 class ModeSelect(discord.ui.View):
@@ -152,6 +155,10 @@ async def on_ready():
     except Exception as e:
         print("❌ Failed to sync global commands:", e)
 
+    # Register persistent views so buttons keep working after restart
+    bot.add_view(QuestionView())
+    bot.add_view(ModeSelect())
+
 
 # ---------- Slash Commands ----------
 @tree.command(name="truth", description="Get a Truth question with buttons.")
@@ -159,7 +166,7 @@ async def on_ready():
 async def truth(interaction: discord.Interaction):
     q = get_question("truth", interaction.user.id)
     await respond(interaction, embed=make_embed("Truth", q, get_user_mode(interaction.user.id), interaction),
-                  view=QuestionView(interaction.user.id))
+                  view=QuestionView())
 
 
 @tree.command(name="dare", description="Get a Dare question with buttons.")
@@ -167,7 +174,7 @@ async def truth(interaction: discord.Interaction):
 async def dare(interaction: discord.Interaction):
     q = get_question("dare", interaction.user.id)
     await respond(interaction, embed=make_embed("Dare", q, get_user_mode(interaction.user.id), interaction),
-                  view=QuestionView(interaction.user.id))
+                  view=QuestionView())
 
 
 @tree.command(name="wyr", description="Get a Would You Rather question with buttons.")
@@ -175,7 +182,7 @@ async def dare(interaction: discord.Interaction):
 async def wyr(interaction: discord.Interaction):
     q = get_question("wyr", interaction.user.id)
     await respond(interaction, embed=make_embed("Would You Rather", q, get_user_mode(interaction.user.id), interaction),
-                  view=QuestionView(interaction.user.id))
+                  view=QuestionView())
 
 
 @tree.command(name="ama", description="Get an AMA prompt with buttons.")
@@ -183,7 +190,7 @@ async def wyr(interaction: discord.Interaction):
 async def ama(interaction: discord.Interaction):
     q = get_question("ama", interaction.user.id)
     await respond(interaction, embed=make_embed("Ask Me Anything", q, get_user_mode(interaction.user.id), interaction),
-                  view=QuestionView(interaction.user.id))
+                  view=QuestionView())
 
 
 @tree.command(name="mode", description="Choose SFW or NSFW mode (per user).")
