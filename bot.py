@@ -44,15 +44,18 @@ def get_context_id(interaction: discord.Interaction) -> str:
 
 
 def get_user_mode(user_id: int, context_id: str) -> str:
+    """Get mode for a user in a specific context, default = sfw."""
     return settings.get("modes", {}).get(str(user_id), {}).get(context_id, "sfw")
 
 
 def set_user_mode(user_id: int, context_id: str, mode: str):
+    """Set mode for a user in a specific context (server/DM)."""
     settings.setdefault("modes", {}).setdefault(str(user_id), {})[context_id] = mode
     save_json(SETTINGS_FILE, settings)
 
 
 def get_question(category: str, user_id: int, context_id: str) -> str:
+    """Fetch question from correct category and mode."""
     mode = get_user_mode(user_id, context_id)
     pool = questions.get(category, {}).get(mode, [])
     if not pool:
@@ -109,15 +112,19 @@ class ModeSelect(discord.ui.View):
     async def sfw_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = get_context_id(interaction)
         set_user_mode(interaction.user.id, ctx, "sfw")
-        await interaction.response.send_message("✅ Mode set to **SFW** (only in this chat).",
-                                                ephemeral=(interaction.guild is not None))
+        await interaction.response.send_message(
+            "✅ Mode set to **SFW** (only in this chat).",
+            ephemeral=True
+        )
 
     @discord.ui.button(label="NSFW Mode", style=discord.ButtonStyle.danger)
     async def nsfw_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = get_context_id(interaction)
         set_user_mode(interaction.user.id, ctx, "nsfw")
-        await interaction.response.send_message("🔞 Mode set to **NSFW** (only in this chat).",
-                                                ephemeral=(interaction.guild is not None))
+        await interaction.response.send_message(
+            "🔞 Mode set to **NSFW** (only in this chat).",
+            ephemeral=True
+        )
 
 # ---------- Embeds ----------
 def make_embed(category, question, mode, interaction):
