@@ -234,7 +234,7 @@ def home():
     return "<h1>Bot is running!</h1>"
 
 def run_flask():
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="37.60.233.77", port=22)
 
 # ---------- Main ----------
 if __name__ == "__main__":
