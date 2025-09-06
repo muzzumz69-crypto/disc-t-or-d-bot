@@ -1,3 +1,4 @@
+# ---------- Imports ----------
 import os
 import json
 import random
@@ -9,15 +10,17 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from flask import Flask
 
+
 # ---------- Setup ----------
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN") or os.getenv("TOKEN")
-LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "0"))  # Support server log channel
+
 intents = discord.Intents.default()
 intents.message_content = True
-intents.members = True  # for counting users
+
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree
+
 
 # ---------- File Helpers ----------
 QUESTIONS_FILE = "questions.json"
@@ -38,6 +41,7 @@ def save_json(file, data):
 
 questions = load_json(QUESTIONS_FILE, {})
 settings = load_json(SETTINGS_FILE, {})
+
 
 # ---------- Context-aware Mode Handling ----------
 def get_context_id(interaction: discord.Interaction) -> str:
@@ -63,6 +67,7 @@ def get_question(category: str, user_id: int, context_id: str) -> str:
     if not pool:
         return f"No questions found for {category.upper()} ({mode.upper()}). Use /add to populate."
     return random.choice(pool)
+
 
 # ---------- Views ----------
 class QuestionView(discord.ui.View):
@@ -128,6 +133,7 @@ class ModeSelect(discord.ui.View):
             ephemeral=True
         )
 
+
 # ---------- Embeds ----------
 def make_embed(category, question, mode, interaction):
     embed = discord.Embed(
@@ -138,6 +144,7 @@ def make_embed(category, question, mode, interaction):
     embed.set_footer(text=f"Requested by {interaction.user}")
     return embed
 
+
 # ---------- Respond Helper ----------
 async def respond(interaction, *args, **kwargs):
     try:
@@ -145,14 +152,14 @@ async def respond(interaction, *args, **kwargs):
     except discord.InteractionResponded:
         await interaction.followup.send(*args, **kwargs)
 
+
 # ---------- Slash Commands ----------
 @tree.command(name="truth", description="Get a Truth question with buttons.")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def truth(interaction: discord.Interaction):
     ctx = get_context_id(interaction)
     q = get_question("truth", interaction.user.id, ctx)
-    await respond(interaction, embed=make_embed("Truth", q, get_user_mode(interaction.user.id, ctx), interaction),
-                  view=QuestionView())
+    await respond(interaction, embed=make_embed("Truth", q, get_user_mode(interaction.user.id, ctx), interaction), view=QuestionView())
 
 
 @tree.command(name="dare", description="Get a Dare question with buttons.")
@@ -160,8 +167,7 @@ async def truth(interaction: discord.Interaction):
 async def dare(interaction: discord.Interaction):
     ctx = get_context_id(interaction)
     q = get_question("dare", interaction.user.id, ctx)
-    await respond(interaction, embed=make_embed("Dare", q, get_user_mode(interaction.user.id, ctx), interaction),
-                  view=QuestionView())
+    await respond(interaction, embed=make_embed("Dare", q, get_user_mode(interaction.user.id, ctx), interaction), view=QuestionView())
 
 
 @tree.command(name="wyr", description="Get a Would You Rather question with buttons.")
@@ -169,8 +175,7 @@ async def dare(interaction: discord.Interaction):
 async def wyr(interaction: discord.Interaction):
     ctx = get_context_id(interaction)
     q = get_question("wyr", interaction.user.id, ctx)
-    await respond(interaction, embed=make_embed("Would You Rather", q, get_user_mode(interaction.user.id, ctx), interaction),
-                  view=QuestionView())
+    await respond(interaction, embed=make_embed("Would You Rather", q, get_user_mode(interaction.user.id, ctx), interaction), view=QuestionView())
 
 
 @tree.command(name="ama", description="Get an Ask Me Anything question with buttons.")
@@ -178,8 +183,7 @@ async def wyr(interaction: discord.Interaction):
 async def ama(interaction: discord.Interaction):
     ctx = get_context_id(interaction)
     q = get_question("ama", interaction.user.id, ctx)
-    await respond(interaction, embed=make_embed("Ask Me Anything", q, get_user_mode(interaction.user.id, ctx), interaction),
-                  view=QuestionView())
+    await respond(interaction, embed=make_embed("Ask Me Anything", q, get_user_mode(interaction.user.id, ctx), interaction), view=QuestionView())
 
 
 @tree.command(name="mode", description="Switch between SFW and NSFW modes.")
@@ -187,60 +191,6 @@ async def ama(interaction: discord.Interaction):
 async def mode(interaction: discord.Interaction):
     await respond(interaction, "⚙️ Select your mode:", view=ModeSelect())
 
-# ---------- Logging & Stats ----------
-command_usage_count = 0
-
-async def log_to_channel(embed: discord.Embed):
-    if not LOG_CHANNEL_ID:
-        return
-    channel = bot.get_channel(LOG_CHANNEL_ID)
-    if channel:
-        try:
-            await channel.send(embed=embed)
-        except Exception as e:
-            print("❌ Failed to log:", e)
-
-@bot.event
-async def on_guild_join(guild):
-    embed = discord.Embed(
-        title="✅ Bot Added to a Server",
-        description=f"**{guild.name}** (ID: {guild.id})",
-        color=discord.Color.green()
-    )
-    embed.add_field(name="Members", value=str(guild.member_count))
-    await log_to_channel(embed)
-
-@bot.event
-async def on_guild_remove(guild):
-    embed = discord.Embed(
-        title="❌ Bot Removed from a Server",
-        description=f"**{guild.name}** (ID: {guild.id})",
-        color=discord.Color.red()
-    )
-    await log_to_channel(embed)
-
-@bot.event
-async def on_app_command_completion(interaction, command):
-    global command_usage_count
-    command_usage_count += 1
-    embed = discord.Embed(
-        title="📌 Command Used",
-        description=f"User: {interaction.user.mention}\n"
-                    f"Command: `/{command.qualified_name}`\n"
-                    f"Server: {interaction.guild.name if interaction.guild else 'DM'}",
-        color=discord.Color.blurple()
-    )
-    await log_to_channel(embed)
-
-@tree.command(name="stats", description="Show bot statistics.")
-async def stats(interaction: discord.Interaction):
-    total_servers = len(bot.guilds)
-    total_users = sum(g.member_count for g in bot.guilds if g.member_count)
-    embed = discord.Embed(title="📊 Bot Statistics", color=discord.Color.magenta())
-    embed.add_field(name="Servers", value=str(total_servers))
-    embed.add_field(name="Users", value=str(total_users))
-    embed.add_field(name="Commands Used (session)", value=str(command_usage_count))
-    await interaction.response.send_message(embed=embed)
 
 # ---------- Bot Events ----------
 @bot.event
@@ -256,19 +206,21 @@ async def on_ready():
     bot.add_view(QuestionView())
     bot.add_view(ModeSelect())
 
+
 # ---------- Flask Web ----------
 app = Flask(__name__)
+
 
 @app.route('/')
 def home():
     return "<h1>Bot is running!</h1>"
 
+
 def run_flask():
     app.run(host="0.0.0.0", port=8080)
 
+
 # ---------- Main ----------
 if __name__ == "__main__":
-    if not TOKEN:
-        raise SystemExit("❌ No DISCORD_TOKEN found in .env")
     threading.Thread(target=run_flask).start()
     bot.run(TOKEN)
