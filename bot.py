@@ -12,8 +12,10 @@ from flask import Flask
 # ---------- Setup ----------
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN") or os.getenv("TOKEN")
+LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "0"))  # Support server log channel
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True  # for counting users
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree
 
@@ -136,6 +138,13 @@ def make_embed(category, question, mode, interaction):
     embed.set_footer(text=f"Requested by {interaction.user}")
     return embed
 
+# ---------- Respond Helper ----------
+async def respond(interaction, *args, **kwargs):
+    try:
+        await interaction.response.send_message(*args, **kwargs)
+    except discord.InteractionResponded:
+        await interaction.followup.send(*args, **kwargs)
+
 # ---------- Slash Commands ----------
 @tree.command(name="truth", description="Get a Truth question with buttons.")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -178,12 +187,60 @@ async def ama(interaction: discord.Interaction):
 async def mode(interaction: discord.Interaction):
     await respond(interaction, "⚙️ Select your mode:", view=ModeSelect())
 
-# ---------- Respond Helper ----------
-async def respond(interaction, *args, **kwargs):
-    try:
-        await interaction.response.send_message(*args, **kwargs)
-    except discord.InteractionResponded:
-        await interaction.followup.send(*args, **kwargs)
+# ---------- Logging & Stats ----------
+command_usage_count = 0
+
+async def log_to_channel(embed: discord.Embed):
+    if not LOG_CHANNEL_ID:
+        return
+    channel = bot.get_channel(LOG_CHANNEL_ID)
+    if channel:
+        try:
+            await channel.send(embed=embed)
+        except Exception as e:
+            print("❌ Failed to log:", e)
+
+@bot.event
+async def on_guild_join(guild):
+    embed = discord.Embed(
+        title="✅ Bot Added to a Server",
+        description=f"**{guild.name}** (ID: {guild.id})",
+        color=discord.Color.green()
+    )
+    embed.add_field(name="Members", value=str(guild.member_count))
+    await log_to_channel(embed)
+
+@bot.event
+async def on_guild_remove(guild):
+    embed = discord.Embed(
+        title="❌ Bot Removed from a Server",
+        description=f"**{guild.name}** (ID: {guild.id})",
+        color=discord.Color.red()
+    )
+    await log_to_channel(embed)
+
+@bot.event
+async def on_app_command_completion(interaction, command):
+    global command_usage_count
+    command_usage_count += 1
+    embed = discord.Embed(
+        title="📌 Command Used",
+        description=f"User: {interaction.user.mention}\n"
+                    f"Command: `/{command.qualified_name}`\n"
+                    f"Server: {interaction.guild.name if interaction.guild else 'DM'}",
+        color=discord.Color.blurple()
+    )
+    await log_to_channel(embed)
+
+@tree.command(name="stats", description="Show bot statistics.")
+async def stats(interaction: discord.Interaction):
+    total_servers = len(bot.guilds)
+    total_users = sum(g.member_count for g in bot.guilds if g.member_count)
+    embed = discord.Embed(title="📊 Bot Statistics", color=discord.Color.magenta())
+    embed.add_field(name="Servers", value=str(total_servers))
+    embed.add_field(name="Users", value=str(total_users))
+    embed.add_field(name="Commands Used (session)", value=str(command_usage_count))
+    await interaction.response.send_message(embed=embed)
 
 # ---------- Bot Events ----------
 @bot.event
@@ -211,5 +268,7 @@ def run_flask():
 
 # ---------- Main ----------
 if __name__ == "__main__":
+    if not TOKEN:
+        raise SystemExit("❌ No DISCORD_TOKEN found in .env")
     threading.Thread(target=run_flask).start()
     bot.run(TOKEN)
