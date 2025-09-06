@@ -18,7 +18,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree
 
 # Your support server log channel ID (replace this!)
-LOG_CHANNEL_ID = 123456789012345678  
+LOG_CHANNEL_ID = 1413961775875100692  
 
 # ---------- File Helpers ----------
 QUESTIONS_FILE = "questions.json"
